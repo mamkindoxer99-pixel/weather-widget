@@ -1,0 +1,522 @@
+--- public/standalone.html (原始)
+
+
++++ public/standalone.html (修改后)
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#4A90D9">
+<title>Погода — Weather Widget</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body,#root{width:100%;height:100%;overflow:hidden;font-family:'Inter',-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+body{background:#1a1a3e}
+
+/* Backgrounds */
+.weather-bg{position:fixed;inset:0;z-index:0;overflow:hidden;transition:background 1s}
+.bg-clear-day{background:linear-gradient(180deg,#4A90D9 0%,#87CEEB 50%,#B4E4FF 100%)}
+.bg-clear-night{background:linear-gradient(180deg,#0a0a2e 0%,#1a1a4e 50%,#2d1b69 100%)}
+.bg-cloudy{background:linear-gradient(180deg,#5B6E7A 0%,#7A8B96 50%,#9AABB8 100%)}
+.bg-rainy{background:linear-gradient(180deg,#2C3E50 0%,#4A6073 50%,#5D7B8A 100%)}
+.bg-snowy{background:linear-gradient(180deg,#B8C6D4 0%,#D4DEE7 50%,#E8EEF4 100%)}
+.bg-stormy{background:linear-gradient(180deg,#1a1a2e 0%,#2d2d44 50%,#3d3d5c 100%)}
+
+/* Rain */
+.rain-drop{position:absolute;width:2px;background:linear-gradient(transparent,rgba(174,194,224,0.6));animation:rain-fall linear infinite;border-radius:0 0 2px 2px}
+@keyframes rain-fall{0%{transform:translateY(-100vh) translateX(0);opacity:1}100%{transform:translateY(100vh) translateX(-20px);opacity:0.3}}
+
+/* Snow */
+.snowflake{position:absolute;background:white;border-radius:50%;opacity:0.8;animation:snow-fall linear infinite;filter:blur(0.5px)}
+@keyframes snow-fall{0%{transform:translateY(-10vh) translateX(0) rotate(0deg);opacity:1}50%{transform:translateY(50vh) translateX(30px) rotate(180deg);opacity:0.8}100%{transform:translateY(100vh) translateX(-10px) rotate(360deg);opacity:0.3}}
+
+/* Cloud */
+.cloud{position:absolute;background:rgba(255,255,255,0.15);border-radius:50%;filter:blur(20px);animation:cloud-drift linear infinite}
+@keyframes cloud-drift{0%{transform:translateX(-200px)}100%{transform:translateX(calc(100vw + 200px))}}
+
+/* Glass */
+.glass{background:rgba(255,255,255,0.12);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.18);border-radius:20px}
+.glass-strong{background:rgba(255,255,255,0.2);backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);border:1px solid rgba(255,255,255,0.25);border-radius:24px}
+
+/* Widget */
+.widget-card{transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1),box-shadow 0.3s}
+.widget-card:hover{transform:scale(1.02) translateY(-2px);box-shadow:0 20px 60px rgba(0,0,0,0.3)}
+
+/* Scroll */
+.scroll-container{overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,0.2) transparent}
+.scroll-container::-webkit-scrollbar{width:4px}
+.scroll-container::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.2);border-radius:4px}
+
+/* Animations */
+@keyframes fadeUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:0.4}50%{opacity:1}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.animate-fade-up{animation:fadeUp 0.8s cubic-bezier(0.34,1.56,0.64,1) forwards}
+.animate-pulse{animation:pulse 2s ease-in-out infinite}
+.animate-spin{animation:spin 2s linear infinite}
+
+/* Layout */
+.container{max-width:1024px;margin:0 auto;padding:24px 16px}
+.grid-2{display:grid;grid-template-columns:1fr;gap:16px}
+.grid-4{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+@media(min-width:768px){.grid-2{grid-template-columns:1fr 1fr}.grid-4{grid-template-columns:repeat(4,1fr)}}
+
+/* Flex */
+.flex{display:flex}.flex-col{flex-direction:column}.items-center{align-items:center}.justify-between{justify-content:space-between}.gap-2{gap:8px}.gap-3{gap:12px}.gap-4{gap:16px}
+
+/* Text */
+.text-white{color:white}.text-xs{font-size:12px}.text-sm{font-size:14px}.text-base{font-size:16px}.text-lg{font-size:18px}.text-2xl{font-size:24px}.text-7xl{font-size:72px}.font-light{font-weight:300}.font-medium{font-weight:500}.font-semibold{font-weight:600}.uppercase{text-transform:uppercase}.tracking-wider{letter-spacing:0.05em}.capitalize{text-transform:capitalize}.text-center{text-align:center}
+.text-50{opacity:0.5}.text-60{opacity:0.6}.text-70{opacity:0.7}.text-80{opacity:0.8}.text-90{opacity:0.9}
+
+/* Spacing */
+.mt-1{margin-top:4px}.mt-2{margin-top:8px}.mt-3{margin-top:12px}.mt-4{margin-top:16px}.mt-6{margin-top:24px}.mb-2{margin-bottom:8px}.mb-3{margin-bottom:12px}.mb-4{margin-bottom:16px}.mb-6{margin-bottom:24px}.p-4{padding:16px}.p-5{padding:20px}.p-6{padding:24px}
+
+/* Misc */
+.w-full{width:100%}.rounded-full{border-radius:9999px}.overflow-hidden{overflow:hidden}.relative{position:relative}.border-t{border-top:1px solid rgba(255,255,255,0.1)}.pt-4{padding-top:16px}.min-w{min-width:56px}.hourly-scroll{display:flex;gap:16px;overflow-x:auto;padding-bottom:8px;scrollbar-width:thin}
+.btn{padding:10px;border-radius:16px;cursor:pointer;border:none;background:rgba(255,255,255,0.12);backdrop-filter:blur(20px);color:rgba(255,255,255,0.6);transition:all 0.2s;display:flex;align-items:center;justify-content:center}
+.btn:hover{background:rgba(255,255,255,0.2);color:white}
+.search-input{background:transparent;border:none;outline:none;color:white;font-size:14px;width:100%;font-family:inherit}
+.search-input::placeholder{color:rgba(255,255,255,0.4)}
+.badge{padding:4px 12px;border-radius:9999px;background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.7);font-size:12px;display:inline-block}
+.progress-bar{height:8px;border-radius:4px;background:rgba(255,255,255,0.1);overflow:hidden}
+.progress-fill{height:100%;border-radius:4px;transition:width 1.5s ease-out}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<script type="text/babel">
+const { useState, useEffect, useMemo, useCallback } = React;
+
+const API_KEY = 'bd5e378503939ddaee76f12ad7a97608';
+const BASE = 'https://api.openweathermap.org/data/2.5';
+
+// Icons as SVG components
+const Icons = {
+  Search: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>,
+  X: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18M6 6l12 12"/></svg>,
+  MapPin: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>,
+  Refresh: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>,
+  Droplets: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7.29 6.75 7 5.3c-.29 1.45-1.14 2.84-2.29 3.76S3 11.1 3 12.25c0 2.22 1.8 4.05 4 4.05z"/><path d="M12.56 14.1c1.33 0 2.44-1.12 2.44-2.47 0-.7-.34-1.38-1.04-1.95-.7-.56-1.33-1.4-1.4-2.33-.07.93-.7 1.77-1.4 2.33-.7.57-1.04 1.25-1.04 1.95 0 1.35 1.11 2.47 2.44 2.47z"/><path d="M17 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S17.29 6.75 17 5.3c-.29 1.45-1.14 2.84-2.29 3.76S13 11.1 13 12.25c0 2.22 1.8 4.05 4 4.05z"/></svg>,
+  Wind: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2"/><path d="M9.6 4.6A2 2 0 1 1 11 8H2"/><path d="M12.6 19.4A2 2 0 1 0 14 16H2"/></svg>,
+  Eye: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>,
+  Gauge: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="m16 8-4 8-4-4"/></svg>,
+  Sunrise: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2v8"/><path d="m4.93 10.93 1.41 1.41"/><path d="M2 18h20"/><path d="m20.93 10.93-1.41 1.41"/><path d="M12 18a6 6 0 0 0 6-6"/><path d="M12 18a6 6 0 0 1-6-6"/><path d="M12 2v4"/></svg>,
+  Sunset: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 10V2"/><path d="m4.93 10.93 1.41 1.41"/><path d="M2 18h20"/><path d="m20.93 10.93-1.41 1.41"/><path d="M12 18a6 6 0 0 0 6-6"/><path d="M12 18a6 6 0 0 1-6-6"/></svg>,
+  Thermometer: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/></svg>,
+  Sun: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>,
+  Download: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>,
+};
+
+function getWindDir(deg) {
+  const d = ['С','СВ','В','ЮВ','Ю','ЮЗ','З','СЗ'];
+  return d[Math.round(deg/45)%8];
+}
+
+function formatTime(ts, tz) {
+  const d = new Date((ts + tz) * 1000);
+  return d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit',timeZone:'UTC'});
+}
+
+function getBg(weather, isNight) {
+  if (isNight) {
+    const m = {Clear:'bg-clear-night',Clouds:'bg-cloudy',Rain:'bg-rainy',Drizzle:'bg-rainy',Snow:'bg-snowy',Thunderstorm:'bg-stormy'};
+    return m[weather]||'bg-clear-night';
+  }
+  const m = {Clear:'bg-clear-day',Clouds:'bg-cloudy',Rain:'bg-rainy',Drizzle:'bg-rainy',Snow:'bg-snowy',Thunderstorm:'bg-stormy'};
+  return m[weather]||'bg-clear-day';
+}
+
+// Animated Background
+function AnimatedBG({weather, isNight, clouds}) {
+  const rain = useMemo(() => {
+    if (!['Rain','Drizzle','Thunderstorm'].includes(weather)) return [];
+    return Array.from({length:60},(_,i)=>({id:i,left:Math.random()*100+'%',h:Math.random()*30+15+'px',dur:Math.random()*0.5+0.5+'s',del:Math.random()*2+'s',op:Math.random()*0.5+0.3}));
+  },[weather]);
+
+  const snow = useMemo(() => {
+    if (weather!=='Snow') return [];
+    return Array.from({length:40},(_,i)=>({id:i,left:Math.random()*100+'%',size:Math.random()*6+3+'px',dur:Math.random()*3+3+'s',del:Math.random()*5+'s',op:Math.random()*0.6+0.4}));
+  },[weather]);
+
+  const cloudEls = useMemo(() => {
+    if (clouds<20) return [];
+    return Array.from({length:Math.min(5,Math.floor(clouds/20))},(_,i)=>({id:i,top:Math.random()*40+'%',w:Math.random()*300+200+'px',h:Math.random()*100+80+'px',dur:Math.random()*40+30+'s',del:Math.random()*20+'s',op:Math.random()*0.15+0.05}));
+  },[clouds]);
+
+  const stars = useMemo(() => {
+    if (!isNight) return [];
+    return Array.from({length:50},(_,i)=>({id:i,left:Math.random()*100+'%',top:Math.random()*60+'%',size:Math.random()*2+1+'px',dur:Math.random()*3+2+'s',del:Math.random()*3+'s'}));
+  },[isNight]);
+
+  return (
+    <div className="weather-bg">
+      {stars.map(s=>(
+        <div key={s.id} style={{position:'absolute',left:s.left,top:s.top,width:s.size,height:s.size,background:'white',borderRadius:'50%',animation:`pulse ${s.dur} ease-in-out infinite`,animationDelay:s.del}}/>
+      ))}
+      {cloudEls.map(c=>(
+        <div key={c.id} className="cloud" style={{top:c.top,width:c.w,height:c.h,opacity:c.op,animationDuration:c.dur,animationDelay:c.del}}/>
+      ))}
+      {rain.map(r=>(
+        <div key={r.id} className="rain-drop" style={{left:r.left,height:r.h,animationDuration:r.dur,animationDelay:r.del,opacity:r.op}}/>
+      ))}
+      {snow.map(s=>(
+        <div key={s.id} className="snowflake" style={{left:s.left,width:s.size,height:s.size,animationDuration:s.dur,animationDelay:s.del,opacity:s.op}}/>
+      ))}
+      {weather==='Thunderstorm' && <div style={{position:'absolute',inset:0,background:'white',animation:'pulse 4s ease-in-out infinite',opacity:0}}/>}
+    </div>
+  );
+}
+
+// Search
+function Search({onSearch, city}) {
+  const [open,setOpen] = useState(false);
+  const [q,setQ] = useState('');
+  const submit = (e) => {e.preventDefault();if(q.trim()){onSearch(q.trim());setQ('');setOpen(false);}};
+
+  return open ? (
+    <form onSubmit={submit} className="glass flex items-center gap-2 px-4 py-2.5" style={{animation:'fadeUp 0.3s ease'}}>
+      <Icons.Search/>
+      <input className="search-input" value={q} onChange={e=>setQ(e.target.value)} placeholder="Поиск города..." autoFocus/>
+      <button type="button" onClick={()=>{setOpen(false);setQ('')}} style={{color:'rgba(255,255,255,0.6)',cursor:'pointer',background:'none',border:'none'}}><Icons.X/></button>
+    </form>
+  ) : (
+    <button onClick={()=>setOpen(true)} className="glass flex items-center gap-2 px-4 py-2.5" style={{cursor:'pointer',color:'white'}}>
+      <Icons.MapPin/>
+      <span className="text-sm font-medium text-90">{city}</span>
+      <Icons.Search/>
+    </button>
+  );
+}
+
+// Main Widget
+function MainWidget({data}) {
+  const {main,weather:w,wind,name,timezone,dt,visibility} = data;
+  const icon = `https://openweathermap.org/img/wn/${w[0].icon}@4x.png`;
+  return (
+    <div className="glass-strong p-6 widget-card animate-fade-up w-full">
+      <div className="flex justify-between items-center mb-4">
+        <div>
+          <h2 className="text-lg font-medium text-white text-90">{name}</h2>
+          <p className="text-xs text-white text-50 mt-1">{formatTime(dt,timezone)}</p>
+        </div>
+        <p className="text-xs text-white text-50">Ощущается {Math.round(main.feels_like)}°</p>
+      </div>
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="animate-fade-up" style={{animationDelay:'0.3s'}}>
+            <span className="text-7xl font-light text-white" style={{letterSpacing:'-3px'}}>{Math.round(main.temp)}</span>
+            <span className="text-2xl font-light text-white text-60">°</span>
+          </div>
+          <p className="text-base text-white text-70 mt-1 capitalize">{w[0].description}</p>
+          <div className="flex gap-3 mt-2 text-xs text-white text-50">
+            <span>Макс: {Math.round(main.temp_max)}°</span>
+            <span>Мин: {Math.round(main.temp_min)}°</span>
+          </div>
+        </div>
+        <img src={icon} alt="" style={{width:140,height:140,filter:'drop-shadow(0 10px 30px rgba(0,0,0,0.3))'}} className="animate-fade-up"/>
+      </div>
+      <div className="flex gap-4 mt-6 pt-4 border-t">
+        <div className="flex items-center gap-1.5 text-xs text-white text-60"><Icons.Droplets/><span>{main.humidity}%</span></div>
+        <div className="flex items-center gap-1.5 text-xs text-white text-60"><Icons.Wind/><span>{wind.speed} м/с</span></div>
+        <div className="flex items-center gap-1.5 text-xs text-white text-60"><Icons.Eye/><span>{(visibility/1000).toFixed(1)} км</span></div>
+      </div>
+    </div>
+  );
+}
+
+// Hourly
+function Hourly({forecast}) {
+  const items = forecast.list.slice(0,8);
+  return (
+    <div className="glass p-5 widget-card animate-fade-up w-full" style={{animationDelay:'0.2s'}}>
+      <h3 className="text-xs font-medium text-white text-50 uppercase tracking-wider mb-3">Почасовой прогноз</h3>
+      <div className="hourly-scroll">
+        {items.map((item,i)=>(
+          <div key={item.dt} className="flex flex-col items-center gap-1.5 min-w" style={{animation:`fadeUp 0.4s ease ${i*0.05}s both`}}>
+            <span className="text-xs text-white text-60">{i===0?'Сейчас':formatTime(item.dt,forecast.city.timezone)}</span>
+            <img src={`https://openweathermap.org/img/wn/${item.weather[0].icon}@2x.png`} alt="" style={{width:40,height:40}}/>
+            <span className="text-sm font-medium text-white">{Math.round(item.main.temp)}°</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Detail Cards
+function DetailCard({icon:Icon,label,value,sub,color,delay}) {
+  return (
+    <div className="glass p-4 widget-card flex flex-col justify-between animate-fade-up" style={{minHeight:140,animationDelay:delay+'s'}}>
+      <div className="flex items-center gap-2 mb-2">
+        <div style={{padding:6,borderRadius:8,background:color+'20'}}><span style={{color}}><Icon/></span></div>
+        <span className="text-xs font-medium text-white text-50 uppercase tracking-wider">{label}</span>
+      </div>
+      <div>
+        <p className="text-2xl font-semibold text-white">{value}</p>
+        {sub && <p className="text-xs text-white text-50 mt-1">{sub}</p>}
+      </div>
+    </div>
+  );
+}
+
+function Details({data}) {
+  const {main,wind,clouds,sys,weather:w,visibility,timezone} = data;
+  const isNight = w[0].icon.includes('n');
+  const uv = Math.round(Math.max(0,Math.min(11,(main.temp-10)/3*(1-clouds.all/200))));
+  const uvL = uv<=2?'Низкий':uv<=5?'Умеренный':uv<=7?'Высокий':'Очень высокий';
+  const uvC = uv<=2?'#4ade80':uv<=5?'#facc15':uv<=7?'#fb923c':'#ef4444';
+
+  return (
+    <div className="grid-4">
+      <DetailCard icon={Icons.Droplets} label="Влажность" value={main.humidity+'%'} sub={main.humidity>70?'Высокая':'Нормальная'} color="#60a5fa" delay={0.3}/>
+      <DetailCard icon={Icons.Wind} label="Ветер" value={wind.speed+' м/с'} sub={getWindDir(wind.deg)} color="#a78bfa" delay={0.35}/>
+      <DetailCard icon={Icons.Gauge} label="Давление" value={main.pressure} sub="гПа" color="#34d399" delay={0.4}/>
+      <DetailCard icon={Icons.Eye} label="Видимость" value={(visibility/1000).toFixed(0)+' км'} sub={visibility>10000?'Отличная':'Хорошая'} color="#fbbf24" delay={0.45}/>
+      <DetailCard icon={Icons.Sun} label="УФ-индекс" value={String(uv)} sub={uvL} color={uvC} delay={0.5}/>
+      <DetailCard icon={Icons.Thermometer} label="Ощущается" value={Math.round(main.feels_like)+'°'} sub={main.feels_like<main.temp?'Холоднее':'Теплее'} color="#f97316" delay={0.55}/>
+      <DetailCard icon={Icons.Sunrise} label="Восход" value={formatTime(sys.sunrise,timezone)} sub="утро" color="#fcd34d" delay={0.6}/>
+      <DetailCard icon={Icons.Sunset} label="Закат" value={formatTime(sys.sunset,timezone)} sub={isNight?'ночь':'вечер'} color="#fb923c" delay={0.65}/>
+    </div>
+  );
+}
+
+// Weekly
+function Weekly({forecast}) {
+  const days = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+  const months = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+  const daily = forecast.list.filter(i=>i.dt_txt.includes('12:00:00')).slice(0,5);
+
+  return (
+    <div className="glass p-5 widget-card animate-fade-up w-full" style={{animationDelay:'0.4s'}}>
+      <h3 className="text-xs font-medium text-white text-50 uppercase tracking-wider mb-4">Прогноз на 5 дней</h3>
+      <div className="flex flex-col gap-3">
+        {daily.map((item,i)=>{
+          const d = new Date(item.dt*1000);
+          return (
+            <div key={item.dt} className="flex items-center justify-between" style={{animation:`fadeUp 0.4s ease ${0.5+i*0.08}s both`}}>
+              <div style={{minWidth:70}}>
+                <p className="text-sm font-medium text-white">{days[d.getDay()]}</p>
+                <p className="text-xs text-white text-40">{d.getDate()} {months[d.getMonth()]}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <img src={`https://openweathermap.org/img/wn/${item.weather[0].icon}@2x.png`} alt="" style={{width:32,height:32}}/>
+                <span className="text-xs text-white text-50 capitalize" style={{width:80}}>{item.weather[0].description}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-white">{Math.round(item.main.temp_max)}°</span>
+                <div className="progress-bar" style={{width:60}}>
+                  <div className="progress-fill" style={{width:((item.main.temp_max-item.main.temp_min)/30*100)+'%',background:'linear-gradient(90deg,#60a5fa,#fb923c)',marginLeft:((item.main.temp_min+10)/50*100)+'%'}}/>
+                </div>
+                <span className="text-sm text-white text-40">{Math.round(item.main.temp_min)}°</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// What to wear
+function WhatToWear({data}) {
+  const {main,wind,weather:w} = data;
+  const fl = main.temp - (wind.speed>5?3:0);
+  let emoji,text,items;
+  if(w[0].main==='Thunderstorm'){emoji='⛈️';text='Сильная гроза!';items=['Водонепроницаемая куртка','Зонт','Резиновые сапоги']}
+  else if(w[0].main==='Snow'){emoji='🧣';text='Снежная погода';items=['Тёплая куртка','Шапка и перчатки','Тёплая обувь']}
+  else if(fl<=0){emoji='🧥';text='Очень холодно';items=['Пуховик','Шарф','Перчатки','Шапка']}
+  else if(fl<=10){emoji='🧥';text='Холодно';items=['Зимняя куртка','Свитер','Тёплые штаны']}
+  else if(fl<=18){emoji='🧥';text='Прохладно';items=['Лёгкая куртка','Джемпер','Длинные брюки']}
+  else if(fl<=25){emoji='👕';text='Комфортно';items=['Рубашка/футболка','Лёгкие брюки','Кроссовки']}
+  else if(fl<=32){emoji='👕';text='Тепло';items=['Лёгкая одежда','Шорты','Солнцезащитные очки']}
+  else{emoji='🩳';text='Жарко!';items=['Максимально лёгкая одежда','Панама','Солнцезащитный крем']}
+
+  return (
+    <div className="glass p-5 widget-card animate-fade-up" style={{animationDelay:'0.5s'}}>
+      <h3 className="text-xs font-medium text-white text-50 uppercase tracking-wider mb-3">Что надеть</h3>
+      <div className="flex items-start gap-4">
+        <span style={{fontSize:36}}>{emoji}</span>
+        <div>
+          <p className="text-base font-medium text-white mb-2">{text}</p>
+          <div className="flex flex-wrap gap-2">
+            {items.map((it,i)=><span key={i} className="badge" style={{animation:`fadeUp 0.4s ease ${0.6+i*0.1}s both`}}>{it}</span>)}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Air params
+function AirParams({data}) {
+  const {main,wind} = data;
+  const bars = [
+    {icon:Icons.Thermometer,label:'Температура',val:Math.round(main.temp)+'°C',pct:Math.min(100,Math.max(0,(main.temp+20)/60*100)),color:'linear-gradient(90deg,#60a5fa,#34d399,#f87171)'},
+    {icon:Icons.Droplets,label:'Влажность',val:main.humidity+'%',pct:main.humidity,color:'linear-gradient(90deg,#93c5fd,#2563eb)'},
+    {icon:Icons.Wind,label:'Ветер',val:wind.speed+' м/с',pct:Math.min(100,wind.speed/20*100),color:'linear-gradient(90deg,#c4b5fd,#7c3aed)'},
+    {icon:Icons.Gauge,label:'Давление',val:main.pressure+' гПа',pct:Math.min(100,Math.max(0,(main.pressure-950)/100*100)),color:'linear-gradient(90deg,#6ee7b7,#059669)'},
+  ];
+  return (
+    <div className="glass p-5 widget-card animate-fade-up" style={{animationDelay:'0.6s'}}>
+      <h3 className="text-xs font-medium text-white text-50 uppercase tracking-wider mb-4">Параметры воздуха</h3>
+      <div className="flex flex-col gap-4">
+        {bars.map((b,i)=>(
+          <div key={i}>
+            <div className="flex justify-between items-center mb-1.5">
+              <div className="flex items-center gap-2"><span style={{color:'rgba(255,255,255,0.6)'}}><b.icon/></span><span className="text-xs text-white text-60">{b.label}</span></div>
+              <span className="text-xs font-medium text-white">{b.val}</span>
+            </div>
+            <div className="progress-bar"><div className="progress-fill" style={{width:b.pct+'%',background:b.color}}/></div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Sun Arc
+function SunArc({data}) {
+  const {sys,dt,timezone} = data;
+  const sunrise=sys.sunrise,sunset=sys.sunset,dayLen=sunset-sunrise;
+  const elapsed=dt-sunrise;
+  const progress=Math.max(0,Math.min(1,elapsed/dayLen));
+  const isDay=dt>=sunrise&&dt<=sunset;
+  const angle=Math.PI*progress;
+  const R=80,cx=50,cy=90;
+  const sx=cx-R*Math.cos(angle),sy=cy-R*Math.sin(angle);
+  const dayH=Math.floor(dayLen/3600),dayM=Math.floor((dayLen%3600)/60);
+
+  return (
+    <div className="glass p-5 widget-card animate-fade-up" style={{animationDelay:'0.7s'}}>
+      <h3 className="text-xs font-medium text-white text-50 uppercase tracking-wider mb-2">{isDay?'Солнце':'Луна'}</h3>
+      <div className="relative w-full" style={{height:128}}>
+        <svg viewBox="0 0 100 100" style={{width:'100%',height:'100%'}}>
+          <path d={`M ${cx-R} ${cy} A ${R} ${R} 0 0 1 ${cx+R} ${cy}`} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="1" strokeDasharray="2 2"/>
+          {isDay && <path d={`M ${cx-R} ${cy} A ${R} ${R} 0 0 1 ${sx} ${sy}`} fill="none" stroke="rgba(255,200,50,0.5)" strokeWidth="2" strokeLinecap="round"/>}
+          <line x1={cx-R-5} y1={cy} x2={cx+R+5} y2={cy} stroke="rgba(255,255,255,0.15)" strokeWidth="0.5"/>
+          <circle cx={isDay?sx:cx} cy={isDay?sy:40} r="4" fill={isDay?'#fbbf24':'#e2e8f0'}/>
+          {isDay && <circle cx={sx} cy={sy} r="8" fill="rgba(251,191,36,0.2)"/>}
+        </svg>
+      </div>
+      <div className="flex justify-between items-center mt-2">
+        <div className="flex items-center gap-1.5"><Icons.Sunrise/><span className="text-xs text-white text-60">{formatTime(sunrise,timezone)}</span></div>
+        <span className="text-xs text-white text-40">{isDay?`Длина дня: ${dayH}ч ${dayM}м`:'Ночь'}</span>
+        <div className="flex items-center gap-1.5"><span className="text-xs text-white text-60">{formatTime(sunset,timezone)}</span><Icons.Sunset/></div>
+      </div>
+    </div>
+  );
+}
+
+// Loading
+function Loading() {
+  return (
+    <div style={{position:'fixed',inset:0,display:'flex',alignItems:'center',justifyContent:'center',background:'linear-gradient(180deg,#1a1a3e,#2d1b69)'}}>
+      <div className="flex flex-col items-center gap-6">
+        <div className="animate-spin" style={{width:64,height:64,borderRadius:'50%',border:'2px solid rgba(255,255,255,0.2)',borderTopColor:'rgba(255,255,255,0.8)'}}/>
+        <p className="animate-pulse text-sm font-light text-white text-60">Загрузка погоды...</p>
+      </div>
+    </div>
+  );
+}
+
+// Main App
+function App() {
+  const [weather,setWeather] = useState(null);
+  const [forecast,setForecast] = useState(null);
+  const [loading,setLoading] = useState(true);
+  const [error,setError] = useState(null);
+  const [city,setCity] = useState('');
+
+  const fetchCity = useCallback(async (c) => {
+    try {
+      setLoading(true);setError(null);
+      const w = await fetch(`${BASE}/weather?q=${encodeURIComponent(c)}&appid=${API_KEY}&units=metric&lang=ru`).then(r=>{if(!r.ok)throw new Error('Город не найден');return r.json()});
+      const f = await fetch(`${BASE}/forecast?lat=${w.coord.lat}&lon=${w.coord.lon}&appid=${API_KEY}&units=metric&lang=ru`).then(r=>r.json());
+      setWeather(w);setForecast(f);setCity(w.name);
+    } catch(e) {setError(e.message)} finally {setLoading(false)}
+  },[]);
+
+  const fetchCoords = useCallback(async (lat,lon) => {
+    try {
+      setLoading(true);setError(null);
+      const [w,f] = await Promise.all([
+        fetch(`${BASE}/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=ru`).then(r=>r.json()),
+        fetch(`${BASE}/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=ru`).then(r=>r.json())
+      ]);
+      setWeather(w);setForecast(f);setCity(w.name);
+    } catch(e) {setError(e.message)} finally {setLoading(false)}
+  },[]);
+
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        p => fetchCoords(p.coords.latitude, p.coords.longitude),
+        () => fetchCity('Moscow')
+      );
+    } else fetchCity('Moscow');
+  },[fetchCoords,fetchCity]);
+
+  if (loading) return <Loading/>;
+  if (error && !weather) return (
+    <div style={{position:'fixed',inset:0,display:'flex',alignItems:'center',justifyContent:'center',background:'linear-gradient(180deg,#1a1a3e,#2d1b69)'}}>
+      <div className="flex flex-col items-center gap-4 text-center" style={{padding:'0 32px'}}>
+        <p className="text-lg font-medium text-white">Ошибка загрузки</p>
+        <p className="text-sm text-white text-50">{error}</p>
+        <button onClick={()=>fetchCity('Moscow')} className="glass p-4 text-sm text-white text-80" style={{cursor:'pointer',marginTop:16}}>Попробовать снова</button>
+      </div>
+    </div>
+  );
+  if (!weather||!forecast) return <Loading/>;
+
+  const isNight = weather.weather[0].icon.includes('n');
+  const bg = getBg(weather.weather[0].main, isNight);
+
+  return (
+    <div className={`relative w-full h-full overflow-hidden ${bg}`} style={{transition:'background 1s'}}>
+      <AnimatedBG weather={weather.weather[0].main} isNight={isNight} clouds={weather.clouds.all}/>
+
+      <div className="relative scroll-container" style={{zIndex:10,width:'100%',height:'100%'}}>
+        <div className="container">
+          {/* Header */}
+          <div className="flex justify-between items-center mb-6 animate-fade-up">
+            <Search onSearch={fetchCity} city={city}/>
+            <button onClick={()=>{if(weather)fetchCoords(weather.coord.lat,weather.coord.lon)}} className="btn"><Icons.Refresh/></button>
+          </div>
+
+          {error && <div className="glass p-4 mb-4 text-center text-sm" style={{color:'#fca5a5',animation:'fadeUp 0.3s ease'}}>{error}</div>}
+
+          {/* Widgets */}
+          <div className="flex flex-col gap-4">
+            <MainWidget data={weather}/>
+            <Hourly forecast={forecast}/>
+            <div className="grid-2">
+              <WhatToWear data={weather}/>
+              <SunArc data={weather}/>
+            </div>
+            <AirParams data={weather}/>
+            <Details data={weather}/>
+            <Weekly forecast={forecast}/>
+
+            <footer className="text-center" style={{padding:'24px 0'}}>
+              <p className="text-xs text-white text-30">Weather Widget • iOS & Android Style</p>
+            </footer>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
